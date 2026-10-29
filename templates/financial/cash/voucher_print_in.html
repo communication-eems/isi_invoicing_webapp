@@ -1,0 +1,10 @@
+{% extends "financial/cash/print_base.html" %}
+{% block doc_title %}Pièce de caisse — Recettes {{ voucher.reference }}{% endblock %}
+{% block back_url %}{% url 'financial:cash_voucher_detail' voucher.pk %}{% endblock %}
+{% block title_block %}
+  <div class="doc-title in">Pièce de caisse</div>
+  <div class="doc-sub">Recettes</div>
+  <div class="doc-ref">{{ voucher.reference }}</div>
+  <div class="doc-date">Émise le {{ voucher.date|date:"d/m/Y" }}</div>
+{% endblock %}
+{% block body %}{% include "financial/cash/_voucher_print_body.html" with third_sign=False %}{% endblock %}

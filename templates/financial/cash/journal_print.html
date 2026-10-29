@@ -1,0 +1,67 @@
+{% extends "financial/cash/print_base.html" %}
+{% load cash_tags %}
+{% block doc_title %}Journal de caisse — {{ period_label }}{% endblock %}
+{% block back_url %}{% url 'financial:cash_journal_detail' journal.pk %}{% endblock %}
+{% block page_size %}A4 landscape{% endblock %}
+{% block page_width %}297mm{% endblock %}
+{% block page_height %}210mm{% endblock %}
+{% block title_block %}
+  <div class="doc-title neutral">Journal de caisse</div>
+  <div class="doc-sub">Recettes et dépenses</div>
+  <div class="doc-ref">{{ period_label }}</div>
+  <div class="doc-date">Édité le {{ printed_at|date:"d/m/Y" }}</div>
+{% endblock %}
+{% block body %}
+<div class="meta-row">
+  <div class="meta-cell"><div class="meta-cell-label">Entreprise</div><div class="meta-cell-value">{{ institute.name|default:journal.name }}</div></div>
+  <div class="meta-cell"><div class="meta-cell-label">Journal</div><div class="meta-cell-value">{{ journal.name }}</div></div>
+  <div class="meta-cell"><div class="meta-cell-label">Période</div><div class="meta-cell-value">{{ period_label }}</div></div>
+  <div class="meta-cell"><div class="meta-cell-label">{% if q %}Recherche : « {{ q }} » — {% endif %}Opérations</div><div class="meta-cell-value">{{ stmt.rows|length }}</div></div>
+</div>
+
+<table class="items-table">
+  <thead>
+    <tr>
+      <th style="width:8mm">N°</th><th style="width:22mm">Date</th><th style="width:28mm">N° bon</th>
+      <th>Désignation</th><th style="width:50mm">Bénéficiaire / Versé par</th>
+      <th class="right" style="width:30mm">Recettes (DA)</th><th class="right" style="width:30mm">Dépenses (DA)</th><th class="right" style="width:32mm">Solde (DA)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if date_from %}
+    <tr class="carry"><td></td><td></td><td></td><td colspan="2">Solde reporté</td><td></td><td></td><td class="right">{{ stmt.opening|da }}</td></tr>
+    {% endif %}
+    {% for r in stmt.rows %}
+    <tr>
+      <td class="muted">{{ r.n }}</td>
+      <td class="strong">{{ r.v.date|date:"d/m/Y" }}</td>
+      <td style="font-family:var(--font-head);font-weight:700;letter-spacing:.3px;">{{ r.v.reference }}</td>
+      <td class="strong">{{ r.v.label }}</td>
+      <td class="strong">{{ r.v.counterparty }}</td>
+      <td class="right in">{% if r.v.is_in %}{{ r.v.amount|da }}{% endif %}</td>
+      <td class="right out">{% if not r.v.is_in %}{{ r.v.amount|da }}{% endif %}</td>
+      <td class="right {% if r.balance < 0 %}neg{% endif %}">{{ r.balance|da }}</td>
+    </tr>
+    {% endfor %}
+    {% for num in blank_rows %}<tr><td class="muted">{{ num }}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}
+    <tr class="total">
+      <td colspan="5" class="right">TOTAUX</td>
+      <td class="right in">{{ stmt.match_in|da }}</td><td class="right out">{{ stmt.match_out|da }}</td><td class="right">{{ stmt.closing|da }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="totals-block">
+  <div class="totals-inner">
+    <div class="totals-row"><span>Solde initial</span><span>{{ stmt.opening|da }} DA</span></div>
+    <div class="totals-row"><span>Total recettes</span><span>+ {{ stmt.total_in|da }} DA</span></div>
+    <div class="totals-row"><span>Total dépenses</span><span>− {{ stmt.total_out|da }} DA</span></div>
+    <div class="totals-row grand"><span>Solde final</span><span>{{ stmt.closing|da }} DA</span></div>
+  </div>
+</div>
+
+<div class="sign-row" style="justify-content:space-between;margin-top:8px;">
+  <div class="sign-box" style="flex:none;width:80mm;height:22mm;"><div class="sign-title">Le caissier</div></div>
+  <div class="sign-box" style="flex:none;width:80mm;height:22mm;"><div class="sign-title">Le responsable</div></div>
+</div>
+{% endblock %}
